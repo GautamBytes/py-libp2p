@@ -19,6 +19,7 @@ from libp2p.abc import (
     IPeerRouting,
     IPeerStore,
     ISecureTransport,
+    ITransport,
 )
 from libp2p.crypto.keys import (
     KeyPair,
@@ -70,6 +71,10 @@ from libp2p.transport.tcp.tcp import (
 )
 from libp2p.transport.upgrader import (
     TransportUpgrader,
+)
+from libp2p.transport.transport_registry import (
+    create_transport_for_multiaddr,
+    get_supported_transport_protocols,
 )
 from libp2p.utils.logging import (
     setup_logging,
@@ -185,17 +190,8 @@ def new_swarm(
 
     id_opt = generate_peer_id_from(key_pair)
 
-    if listen_addrs is None:
-        transport = TCP()
-    else:
-        addr = listen_addrs[0]
-        if addr.__contains__("tcp"):
-            transport = TCP()
-        elif addr.__contains__("quic"):
-            raise ValueError("QUIC not yet supported")
-        else:
-            raise ValueError(f"Unknown transport in listen_addrs: {listen_addrs}")
-
+    transport: ITransport | TCP
+    
     # Generate X25519 keypair for Noise
     noise_key_pair = create_new_x25519_key_pair()
 
@@ -234,6 +230,29 @@ def new_swarm(
         secure_transports_by_protocol=secure_transports_by_protocol,
         muxer_transports_by_protocol=muxer_transports_by_protocol,
     )
+
+    # Create transport based on listen_addrs or default to TCP
+    if listen_addrs is None:
+        transport = TCP()
+    else:
+        # Use the first address to determine transport type
+        addr = listen_addrs[0]
+        transport_maybe = create_transport_for_multiaddr(addr, upgrader)
+
+        if transport_maybe is None:
+            # Fallback to TCP if no specific transport found
+            if addr.__contains__("tcp") and not addr.__contains__("ws"):
+                transport = TCP()
+            elif addr.__contains__("quic"):
+                raise ValueError("QUIC not yet supported")
+            else:
+                supported_protocols = get_supported_transport_protocols()
+                raise ValueError(
+                    f"Unknown transport in listen_addrs: {listen_addrs}. "
+                    f"Supported protocols: {supported_protocols}"
+                )
+        else:
+            transport = transport_maybe
 
     peerstore = peerstore_opt or PeerStore()
     # Store our key pair in peerstore

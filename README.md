@@ -34,7 +34,7 @@ ______________________________________________________________________
 | -------------------------------------- | :--------: | :---------------------------------------------------------------------------------: |
 | **`libp2p-tcp`**                       |     ✅     | [source](https://github.com/libp2p/py-libp2p/blob/main/libp2p/transport/tcp/tcp.py) |
 | **`libp2p-quic`**                      |     🌱     |                                                                                     |
-| **`libp2p-websocket`**                 |     ❌     |                                                                                     |
+| **`libp2p-websocket`**                 |     ✅     | [source](https://github.com/libp2p/py-libp2p/blob/main/libp2p/transport/websocket/transport.py) |
 | **`libp2p-webrtc-browser-to-server`**  |     ❌     |                                                                                     |
 | **`libp2p-webrtc-private-to-private`** |     ❌     |                                                                                     |
 
